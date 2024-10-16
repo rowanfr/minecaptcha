@@ -1,9 +1,9 @@
-use std::sync::Arc;
-
 use futures::executor::block_on;
+use std::sync::Arc;
 use wgpu::{Adapter, Device, DeviceDescriptor, Instance, Queue, RenderPipeline, Surface};
 use winit::window::Window;
 
+/// This stores the WGPU state for the window
 pub struct WgpuState {
     instance: Instance,
     pub surface: Surface<'static>,
@@ -58,6 +58,7 @@ impl WgpuState {
         });
 
         // This is the render pipeline layout
+        // Vertex shaders are necessary while fragment shaders are not because the rasterization pipeline still expects something to define where the fragment shader runs. In essence vertex shaders at a minimum describe the screen where fragment shaders are run in graphics pipelines
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
@@ -79,7 +80,6 @@ impl WgpuState {
             },
             // fragment is optional, so you have to wrap it in Some(). We need it if we want to store color data to the surface
             fragment: Some(wgpu::FragmentState {
-                // 3.
                 module: &shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {

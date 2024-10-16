@@ -1,13 +1,15 @@
+use crate::wgpu::WgpuState;
 use std::sync::Arc;
-
-use wgpu::Surface;
+use wgpu::{
+    util::{BufferInitDescriptor, DeviceExt},
+    Surface,
+};
 use winit::{
     application::ApplicationHandler, event::WindowEvent, event_loop::ActiveEventLoop,
     window::Window,
 };
 
-use crate::wgpu::WgpuState;
-
+/// This stores the main window and associated WGPU state
 #[derive(Default)]
 pub struct Win {
     window: Option<Arc<Window>>,
@@ -118,10 +120,32 @@ impl ApplicationHandler for Win {
                                     timestamp_writes: None,
                                 });
 
+                            /*
+                            Indeces to reduce vertex count aren't working so something is likely misconfigured. Resolve later
+
+                            let indices: [u8; 6] = [0, 1, 2, 1, 3, 2]; // Define the indices for two triangles. Indices are how the triangle orients vertex placement and overlap
+
+                            // Create the index buffer
+                            let index_buffer = wgpu_state.device.create_buffer_init(
+                                &wgpu::util::BufferInitDescriptor {
+                                    label: Some("Index Buffer"),
+                                    contents: &indices,
+                                    usage: wgpu::BufferUsages::INDEX,
+                                },
+                            );
+
+                            // Set the index buffer to allow drawing a square with fewer or overlapping verticies
+                            render_pass.set_index_buffer(
+                                index_buffer.slice(..),
+                                wgpu::IndexFormat::Uint32,
+                            ); // Set the index buffer
+                            */
+
                             // Set the render pipeline to integrate the shader
                             render_pass.set_pipeline(&wgpu_state.render_pipeline);
-                            // We tell wgpu to draw something with three vertices and one instance. This is where @builtin(vertex_index) comes from.
-                            render_pass.draw(0..3, 0..1);
+
+                            // ! We tell wgpu to draw something with the given range of vertices and one instance. This is where @builtin(vertex_index) comes from.
+                            render_pass.draw(0..6, 0..1);
                         }
                         // Submits an iterator of the render command buffer to the queue
                         wgpu_state.queue.submit(std::iter::once(encoder.finish()));
