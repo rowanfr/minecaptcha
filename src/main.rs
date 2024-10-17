@@ -4,7 +4,6 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
-mod voxel;
 mod wgpu;
 mod win;
 
