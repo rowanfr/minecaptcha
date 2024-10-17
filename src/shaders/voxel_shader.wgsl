@@ -28,8 +28,17 @@ fn vs_main(
 }
 
 @fragment
-fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return vec4<f32>(1.0, 0.0, 0.0, 1.0);
+fn fs_main(@builtin(position) frag_coord: vec4<f32>) -> @location(0) vec4<f32> {
+    // Normalize the fragment coordinates to [0, 1] range
+    let normalized_coord = frag_coord.xy / vec2<f32>(800.0, 600.0);  // Adjust these values to your viewport size
+    
+    // Use the normalized coordinates for the red and green channels
+    // Add some variation to make it more interesting
+    return vec4<f32>(
+        normalized_coord.xy,
+        0.,
+        1.0
+    );
 }
 
 const mat3: mat3x2<f32> = mat3x2<f32>(

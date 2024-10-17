@@ -75,6 +75,7 @@ impl WgpuState {
                 // Entry point is the function we want to point to in the shader
                 entry_point: "vs_main",
                 // buffers field tells wgpu what type of vertices we want to pass to the vertex shader. We're specifying the vertices in the vertex shader itself, so we'll leave this empty.
+                // ! Connects to @location function input for vertex shader
                 buffers: &[],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
@@ -84,6 +85,7 @@ impl WgpuState {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     // The targets field tells wgpu what color outputs it should set up. Currently, we only need one for the surface. We use the surface's format so that copying to it is easy, and we specify that the blending should just replace old pixel data with new data. We also tell wgpu to write to all colors: red, blue, green, and alpha
+                    // ! Connects to @location function output for fragment shader
                     format: surface
                         .get_capabilities(&adapter)
                         .formats
