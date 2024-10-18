@@ -1,4 +1,5 @@
 use crate::wgpu::WgpuState;
+use egui_wgpu::ScreenDescriptor;
 use std::sync::Arc;
 use wgpu::{
     util::{BufferInitDescriptor, DeviceExt},
@@ -49,7 +50,7 @@ impl ApplicationHandler for Win {
             // This is the primary way to animate and redraw the image on the screen
             WindowEvent::RedrawRequested => {
                 if let Some(window) = self.window.as_mut() {
-                    if let Some(wgpu_state) = &self.WgpuState {
+                    if let Some(wgpu_state) = self.WgpuState.as_mut() {
                         // If you alter the screen continuously it will likely cause an Outdated error as the screen itself is different from when you requested it. This is why we add a loop to continuously request until the user stops resizing the screen
                         let output = loop {
                             // Gets screen size and checks if either width or height is 0. The code will panic if either is true so don't
@@ -102,14 +103,15 @@ impl ApplicationHandler for Win {
                                     label: Some("Render Pass"),
                                     // color_attachments describe where we are going to draw our color to
                                     // RenderPassColorAttachment has view field, which informs wgpu what texture to save the colors to, a resolve_target is the texture that will receive the resolved output. This will be the same as view unless multisampling is enabled, the ops field takes a wgpu::Operations object. This tells wgpu what to do with the colors on the screen (specified by view).
+                                    // ! Color is the background color
                                     color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                                         view: &view,
                                         resolve_target: None,
                                         ops: wgpu::Operations {
                                             load: wgpu::LoadOp::Clear(wgpu::Color {
-                                                r: 0.1,
-                                                g: 0.2,
-                                                b: 0.3,
+                                                r: 0.17,
+                                                g: 0.60,
+                                                b: 0.88,
                                                 a: 1.0,
                                             }),
                                             store: wgpu::StoreOp::Store,
@@ -147,6 +149,18 @@ impl ApplicationHandler for Win {
                             // ! We tell wgpu to draw something with the given range of vertices and one instance. This is where @builtin(vertex_index) comes from.
                             render_pass.draw(0..6, 0..1);
                         }
+
+                        // Generated size twice. Resolve later
+                        let size = window.inner_size();
+
+                        let screen_descriptor = ScreenDescriptor {
+                            size_in_pixels: [size.width, size.height],
+                            pixels_per_point: wgpu_state.window.scale_factor() as f32,
+                        };
+
+                        // Draws egui
+                        wgpu_state.draw(&mut encoder, &view, screen_descriptor);
+
                         // Submits an iterator of the render command buffer to the queue
                         wgpu_state.queue.submit(std::iter::once(encoder.finish()));
                         // Schedule texture to be presented on the owned surface

@@ -1,7 +1,13 @@
+use egui_wgpu::ScreenDescriptor;
 use futures::executor::block_on;
 use std::sync::Arc;
-use wgpu::{Adapter, Device, DeviceDescriptor, Instance, Queue, RenderPipeline, Surface};
+use wgpu::{
+    Adapter, CommandEncoder, Device, DeviceDescriptor, Instance, Queue, RenderPipeline, Surface,
+    TextureView,
+};
 use winit::window::Window;
+
+use crate::{egui::gui, egui_render::EguiRenderer};
 
 /// This stores the WGPU state for the window
 pub struct WgpuState {
@@ -10,8 +16,9 @@ pub struct WgpuState {
     pub adapter: Adapter,
     pub device: Device,
     pub queue: Queue,
-    window: Arc<Window>,
+    pub window: Arc<Window>,
     pub render_pipeline: RenderPipeline,
+    pub egui: EguiRenderer,
 }
 
 impl WgpuState {
@@ -92,7 +99,8 @@ impl WgpuState {
                         .get(0)
                         .expect("No Format Present")
                         .clone(),
-                    blend: Some(wgpu::BlendState::REPLACE),
+                    // blend specifies how the colors will interact with the background
+                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
@@ -124,6 +132,11 @@ impl WgpuState {
             cache: None, // cache allows wgpu to cache shader compilation data. Only really useful for Android build targets
         });
 
+        let egui = EguiRenderer::new(
+            &device,
+            window.clone(), // winit Window
+        );
+
         WgpuState {
             instance,
             surface,
@@ -132,6 +145,25 @@ impl WgpuState {
             queue,
             window,
             render_pipeline,
+            egui,
         }
+    }
+
+    // This draws egui upon the screen
+    pub fn draw(
+        &mut self,
+        encoder: &mut CommandEncoder,
+        window_surface_view: &TextureView,
+        screen_descriptor: ScreenDescriptor,
+    ) {
+        self.egui.draw(
+            &self.device,
+            &self.queue,
+            encoder,
+            &self.window,
+            window_surface_view,
+            screen_descriptor,
+            gui,
+        );
     }
 }

@@ -4,6 +4,8 @@ use winit::{
     event_loop::{ControlFlow, EventLoop},
 };
 
+mod egui;
+mod egui_render;
 mod wgpu;
 mod win;
 
