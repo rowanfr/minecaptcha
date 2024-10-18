@@ -14,7 +14,7 @@ use winit::{
 #[derive(Default)]
 pub struct Win {
     window: Option<Arc<Window>>,
-    WgpuState: Option<WgpuState>,
+    wgpu_state: Option<WgpuState>,
 }
 
 impl Win {
@@ -24,7 +24,7 @@ impl Win {
                 .create_window(Window::default_attributes().with_title("MineCaptcha"))
                 .expect("Couldn't create window"),
         ));
-        self.WgpuState = Some(WgpuState::new(self.window.as_ref().unwrap().clone()));
+        self.wgpu_state = Some(WgpuState::new(self.window.as_ref().unwrap().clone()));
     }
 }
 
@@ -50,7 +50,7 @@ impl ApplicationHandler for Win {
             // This is the primary way to animate and redraw the image on the screen
             WindowEvent::RedrawRequested => {
                 if let Some(window) = self.window.as_mut() {
-                    if let Some(wgpu_state) = self.WgpuState.as_mut() {
+                    if let Some(wgpu_state) = self.wgpu_state.as_mut() {
                         // If you alter the screen continuously it will likely cause an Outdated error as the screen itself is different from when you requested it. This is why we add a loop to continuously request until the user stops resizing the screen
                         let (output_texture, size) = loop {
                             // Gets screen size and checks if either width or height is 0. The code will panic if either is true so don't
@@ -169,6 +169,11 @@ impl ApplicationHandler for Win {
                 self.window.as_ref().unwrap().request_redraw();
             }
             _ => (),
+        }
+        if let Some(wgpu_state) = self.wgpu_state.as_mut()
+            && let Some(window) = self.window.as_ref()
+        {
+            wgpu_state.egui.handle_input(window, &event);
         }
     }
 }

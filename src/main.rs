@@ -1,3 +1,5 @@
+#![feature(let_chains)]
+
 use win::Win;
 use winit::{
     error::EventLoopError,
