@@ -52,7 +52,7 @@ impl ApplicationHandler for Win {
                 if let Some(window) = self.window.as_mut() {
                     if let Some(wgpu_state) = self.WgpuState.as_mut() {
                         // If you alter the screen continuously it will likely cause an Outdated error as the screen itself is different from when you requested it. This is why we add a loop to continuously request until the user stops resizing the screen
-                        let output = loop {
+                        let (output_texture, size) = loop {
                             // Gets screen size and checks if either width or height is 0. The code will panic if either is true so don't
                             let size = window.inner_size();
                             if size.width > 0 && size.height > 0 {
@@ -69,7 +69,7 @@ impl ApplicationHandler for Win {
                                 // Configure what the screen renders
                                 // This grabs a frame from the surface to render to
                                 match wgpu_state.surface.get_current_texture() {
-                                    Ok(surf_text) => break surf_text,
+                                    Ok(surf_text) => break (surf_text, size),
                                     Err(e) => match e {
                                         wgpu::SurfaceError::Outdated => {
                                             println!("Outdated Surface");
@@ -84,7 +84,7 @@ impl ApplicationHandler for Win {
                         };
 
                         // This line creates a TextureView with default settings. We need to do this because we want to control how the render code interacts with the texture. This TextureView describes a texture and associated metadata
-                        let view = output
+                        let view = output_texture
                             .texture
                             .create_view(&wgpu::TextureViewDescriptor::default());
                         // We also need to create a CommandEncoder to create the actual commands to send to the GPU. Most modern graphics frameworks expect commands to be stored in a command buffer before being sent to the GPU. The encoder builds a command buffer that we can then send to the GPU.
@@ -150,9 +150,7 @@ impl ApplicationHandler for Win {
                             render_pass.draw(0..6, 0..1);
                         }
 
-                        // Generated size twice. Resolve later
-                        let size = window.inner_size();
-
+                        // ! Can only use size one size otherwise it crashes
                         let screen_descriptor = ScreenDescriptor {
                             size_in_pixels: [size.width, size.height],
                             pixels_per_point: wgpu_state.window.scale_factor() as f32,
@@ -164,7 +162,7 @@ impl ApplicationHandler for Win {
                         // Submits an iterator of the render command buffer to the queue
                         wgpu_state.queue.submit(std::iter::once(encoder.finish()));
                         // Schedule texture to be presented on the owned surface
-                        output.present();
+                        output_texture.present();
                     }
                 }
                 // This is what actually causes the redraw event to be emitted
