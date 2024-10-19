@@ -170,6 +170,7 @@ impl ApplicationHandler for Win {
             }
             _ => (),
         }
+        // ! EGUI event handling or what allows egui state to update and function
         if let Some(wgpu_state) = self.wgpu_state.as_mut()
             && let Some(window) = self.window.as_ref()
         {

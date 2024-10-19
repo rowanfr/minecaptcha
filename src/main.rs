@@ -1,4 +1,5 @@
 #![feature(let_chains)]
+#![feature(const_trait_impl)]
 
 use win::Win;
 use winit::{

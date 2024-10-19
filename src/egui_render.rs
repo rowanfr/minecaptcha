@@ -3,8 +3,31 @@ use std::sync::Arc;
 use egui::{Context, Shadow, Visuals};
 use egui_wgpu::{Renderer, ScreenDescriptor};
 use egui_winit::State;
+use transform_gizmo_egui::{mint::Quaternion, mint::Vector3, Gizmo, GizmoResult};
 use wgpu::{CommandEncoder, Device, Queue, TextureFormat, TextureView};
 use winit::{event::WindowEvent, window::Window};
+
+/// This is the state for the EGUI application that we can use for informing how our shaders operate
+pub struct AppState {
+    pub gizmo: Gizmo,
+    pub rotation: Quaternion<f64>,
+}
+
+impl AppState {
+    pub fn new() -> Self {
+        Self {
+            gizmo: Gizmo::default(),
+            rotation: Quaternion {
+                v: Vector3 {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                },
+                s: 1.0,
+            },
+        }
+    }
+}
 
 /// This stores the EGUI state for the window
 pub struct EguiRenderer {
@@ -12,6 +35,7 @@ pub struct EguiRenderer {
     state: State,
     window: Arc<Window>,
     renderer: Renderer,
+    app_state: AppState,
 }
 
 impl EguiRenderer {
@@ -43,6 +67,7 @@ impl EguiRenderer {
             state: egui_state,
             window,
             renderer: egui_renderer,
+            app_state: AppState::new(),
         }
     }
 
@@ -59,12 +84,12 @@ impl EguiRenderer {
         window: &Window,
         window_surface_view: &TextureView,
         screen_descriptor: ScreenDescriptor,
-        mut run_ui: impl FnMut(&Context),
+        mut run_ui: impl FnMut(&Context, &mut AppState),
     ) {
         // self.state.set_pixels_per_point(window.scale_factor() as f32);
         let raw_input = self.state.take_egui_input(window);
         let full_output = self.context.run(raw_input, |_ui| {
-            run_ui(&self.context);
+            run_ui(&self.context, &mut self.app_state);
         });
 
         self.state
